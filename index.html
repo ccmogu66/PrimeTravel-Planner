@@ -251,6 +251,14 @@ textarea#chat-input::placeholder { color: var(--ink-60); }
 
 
 </style>
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-2M3LWZ9SLX"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-2M3LWZ9SLX');
+</script>
 </head>
 <body>
 
@@ -300,7 +308,11 @@ Be warm, specific, and practical. When giving itineraries, use this format:
 - Each day: morning / afternoon / evening with real place names
 - End with 2-3 quick practical tips
 Keep responses focused and conversational. No markdown symbols like ** or ##.
-IMPORTANT: Always respond in English only. Never use Chinese characters, even for place names — use the romanized English version instead (e.g. "Urumqi" not "乌鲁木齐", "Kashgar" not "喀什").`;
+IMPORTANT: Always respond in English only. Never use Chinese characters, even for place names — use the romanized English version instead (e.g. "Urumqi" not "乌鲁木齐", "Kashgar" not "喀什").
+IMPORTANT: At the very end of EVERY response, always add a contact line in the same language the user wrote in. Use this exact format (translated to match the user's language):
+"Need more help? Contact us on WhatsApp: https://wa.me/message/6MQCUTD6EWLTO1 or email hi@primetravel.cn"
+For example: if user writes in English, end with "Need more help? Contact us on WhatsApp: https://wa.me/message/6MQCUTD6EWLTO1 or email hi@primetravel.cn"
+If user writes in Russian, end with the Russian translation of that line. If user writes in Chinese, end with the Chinese translation. Always match the user's language.`;
 
   let history = [];
   let streaming = false;
@@ -372,7 +384,9 @@ IMPORTANT: Always respond in English only. Never use Chinese characters, even fo
     return text
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
       .replace(/(Day \d+[:\s][^\n]*)/g, '<span class="day-head">$1</span>')
-      .replace(/\n/g, '<br>');
+      .replace(/\n/g, '<br>')
+      // render URLs as clickable links
+      .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener" style="color:var(--red);text-decoration:underline;text-underline-offset:2px">$1</a>');
   }
 
   // ⬇ 把这里换成你的 Worker 地址
@@ -391,6 +405,13 @@ IMPORTANT: Always respond in English only. Never use Chinese characters, even fo
     // Add user bubble
     addMsg('user', text.replace(/\n/g, '<br>'));
     history.push({ role: 'user', content: text });
+    // GA event: track each AI conversation
+    if (typeof gtag !== 'undefined') {
+      gtag('event', 'ai_chat', {
+        event_category: 'engagement',
+        event_label: text.slice(0, 100)
+      });
+    }
     input.value = '';
     input.style.height = 'auto';
 
